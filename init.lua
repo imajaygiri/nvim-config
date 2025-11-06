@@ -1,3 +1,11 @@
+-- -- Dynamic detection of active conda environment
+-- local conda_prefix = os.getenv("CONDA_PREFIX")
+-- if conda_prefix then
+--   vim.g.python3_host_prog = conda_prefix .. "/bin/python"
+-- else
+--   vim.g.python3_host_prog = "/usr/bin/python3" -- fallback
+-- end
+--
 ----------------------------
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then

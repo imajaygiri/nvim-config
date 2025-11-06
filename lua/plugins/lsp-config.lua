@@ -23,8 +23,8 @@ return {
 					"eslint",
 					"rust_analyzer",
 					"dockerls",
-                    "yamlls",
-                    "asm_lsp"
+					"yamlls",
+					"asm_lsp",
 				},
 			})
 		end,
@@ -42,7 +42,6 @@ return {
 					client.server_capabilities.documentRangeFormattingProvider = false
 				end
 			end
-
 			-- Lua
 			lspconfig.lua_ls.setup({
 				capabilities = capabilities,
@@ -84,13 +83,71 @@ return {
 			lspconfig.rust_analyzer.setup({
 				capabilities = capabilities,
 				on_attach = on_attach,
+				settings = {
+					["rust-analyzer"] = {
+						inlayHints = {
+							bindingModeHints = {
+								enable = false,
+							},
+							chainingHints = {
+								enable = true,
+							},
+							closingBraceHints = {
+								enable = true,
+								minLines = 25,
+							},
+							closureReturnTypeHints = {
+								enable = "never",
+							},
+							lifetimeElisionHints = {
+								enable = "never",
+								useParameterNames = false,
+							},
+							maxLength = 25,
+							parameterHints = {
+								enable = true,
+							},
+							reborrowHints = {
+								enable = "never",
+							},
+							renderColons = true,
+							typeHints = {
+								enable = true,
+								hideClosureInitialization = false,
+								hideNamedConstructor = false,
+							},
+						},
+					},
+				},
 			})
 			-- C/C++
+
 			lspconfig.clangd.setup({
 				capabilities = capabilities,
 				on_attach = on_attach,
 			})
 
+			-- cmake
+
+			-- lspconfig.cmake.setup({
+			-- 	capabilities = capabilities,
+			-- 	on_attach = on_attach,
+			-- 	cmd = { "cmake-language-server" },
+			-- 	filetypes = { "cmake" },
+			-- 	root_dir = lspconfig.util.root_pattern("CMakeLists.txt", ".git"),
+			-- })
+
+			-- solidity
+			lspconfig.solidity_ls_nomicfoundation.setup({
+				-- cmd = { mason_path, "--stdio" },
+				filetypes = { "solidity" },
+				root_dir = function(fname)
+					return lspconfig.util.root_pattern("hardhat.config.*", "foundry.toml", ".git")(fname)
+						or lspconfig.util.path.dirname(fname)
+				end,
+				capabilities = capabilities,
+				on_attach = on_attach,
+			})
 			-- javasciprt server
 			-- lspconfig.ts_ls.setup({
 			-- 	capabilities = capabilities,
