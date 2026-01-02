@@ -19,4 +19,5 @@ vim.o.mouse = "a"
 ----remaping ctrl-u and d with j and k --half page scroll-----
 vim.keymap.set("n", "<C-j>", "<C-d>", { noremap = true, silent = true })
 vim.keymap.set("n", "<C-k>", "<C-u>", { noremap = true, silent = true })
-
+vim.keymap.set("v", "<C-j>", "<C-d>", { noremap = true, silent = true })
+vim.keymap.set("v", "<C-k>", "<C-u>", { noremap = true, silent = true })

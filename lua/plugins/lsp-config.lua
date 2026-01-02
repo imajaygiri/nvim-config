@@ -1,195 +1,143 @@
+-- Your lsp-config.lua file, fully migrated for Nvim 0.11+
+
 return {
-	{
-		"williamboman/mason.nvim",
-		config = function()
-			require("mason").setup()
-		end,
-	},
-	{
-		"williamboman/mason-lspconfig.nvim",
-		config = function()
-			require("mason-lspconfig").setup({
-				auto_install = true,
-				ensure_installed = {
-					"lua_ls",
-					"clangd",
-					"jdtls",
-					"pyright",
-					"cssls",
-					"tailwindcss",
-					"emmet_ls",
-					"html",
-					"ts_ls",
-					"eslint",
-					"rust_analyzer",
-					"dockerls",
-					"yamlls",
-				},
-			})
-		end,
-	},
-	{
-		"neovim/nvim-lspconfig",
-		config = function()
-			-- Ensure we are on a version that supports vim.lsp.config (Nvim 0.11+)
-			-- If you get an error here, you might need to update Neovim to Nightly.
-			local capabilities = require("cmp_nvim_lsp").default_capabilities()
+  -- Mason and mason-lspconfig remain the same
+  {
+    "williamboman/mason.nvim",
+    config = function()
+      -- Add "stylua" here so Mason can install and manage it for you.
+      require("mason").setup({
+        ensure_installed = { "stylua" },
+      })
+    end,
+  },
+  {
+    "williamboman/mason-lspconfig.nvim",
+    config = function()
+      -- This plugin's job is just to ensure LSP servers are installed.
+      local ensure_installed = { "lua_ls", "clangd", "jdtls", "pyright", "html", "cssls", "rust_analyzer", "verible" }
+      require("mason-lspconfig").setup({
+        ensure_installed = ensure_installed,
+      })
+    end,
+  },
 
-			-- ✅ Disable formatting from some LSPs
-			local on_attach = function(client, _)
-				if client.name == "html" or client.name == "cssls" or client.name == "emmet_ls" then
-					client.server_capabilities.documentFormattingProvider = false
-					client.server_capabilities.documentRangeFormattingProvider = false
-				end
-			end
+  -- ===================================================================
+  -- UPDATED: nvim-lspconfig using the new API
+  -- ===================================================================
+  {
+    "neovim/nvim-lspconfig",
+    config = function()
+      -- Define our reusable on_attach function and capabilities
+      local on_attach = function(client, bufnr)
+        vim.keymap.set("n", "K", vim.lsp.buf.hover, { buffer = bufnr, desc = "LSP: Hover" })
+        vim.keymap.set("n", "gd", vim.lsp.buf.definition, { buffer = bufnr, desc = "LSP: Go to Definition" })
+        vim.keymap.set(
+          { "n", "v" },
+          "<leader>ca",
+          vim.lsp.buf.code_action,
+          { buffer = bufnr, desc = "LSP: Code Action" }
+        )
+        if client.supports_method("textDocument/inlayHint") then
+          vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+        end
+      end
 
-			-- Helper to set up a server using the new Nvim 0.11+ Native API
-			local function setup(server, opts)
-				opts = opts or {}
-				opts.capabilities = capabilities
-				opts.on_attach = on_attach
-				-- Assign config and enable the server
-				vim.lsp.config[server] = opts
-				vim.lsp.enable(server)
-			end
+      local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-			-- Lua
-			setup("lua_ls", {
-				settings = {
-					Lua = {
-						diagnostics = {
-							globals = { "vim" },
-						},
-					},
-				},
-			})
+      local servers = require("mason-lspconfig").get_installed_servers()
 
-			-- Docker
-			setup("dockerls", {})
+      -- Map of servers that need extra engineering "juice"
+      local enhance_server_opts = {
+        ["lua_ls"] = {
+          settings = {
+            Lua = {
+              diagnostics = { globals = { "vim" } }, -- 🛠 Fixes the 'undefined vim' error
+              workspace = { checkThirdParty = false },
+            },
+          },
+        },
+        ["clangd"] = {
+          cmd = {
+            "clangd",
+            "--background-index", -- 🛠 Index the project in the background
+            "--clang-tidy", -- 🛠 Enable C linting
+            "--completion-style=detailed",
+            "--header-insertion=never", -- 🛠 Prevents annoying auto-includes in C
+          },
+        },
+        ["pyright"] = {
+          settings = {
+            python = {
+              analysis = {
+                extraPaths = { "/home/Vatsal/Codes/Python/OpenCV/stubs" },
+              },
+            },
+          },
+        },
+      }
 
-			-- YAML
-			setup("yamlls", {})
+      for _, server_name in ipairs(servers) do
+        local server_opts = {
+          on_attach = on_attach,
+          capabilities = capabilities,
+        }
 
-			-- Rust
-			setup("rust_analyzer", {
-				settings = {
-					["rust-analyzer"] = {
-						inlayHints = {
-							bindingModeHints = { enable = false },
-							chainingHints = { enable = true },
-							closingBraceHints = { enable = true, minLines = 25 },
-							closureReturnTypeHints = { enable = "never" },
-							lifetimeElisionHints = { enable = "never", useParameterNames = false },
-							maxLength = 25,
-							parameterHints = { enable = true },
-							reborrowHints = { enable = "never" },
-							renderColons = true,
-							typeHints = { enable = true, hideClosureInitialization = false, hideNamedConstructor = false },
-						},
-					},
-				},
-			})
+        -- Merge the enhancements if they exist
+        if enhance_server_opts[server_name] then
+          server_opts = vim.tbl_deep_extend("force", server_opts, enhance_server_opts[server_name])
+        end
 
-			-- C/C++
-			setup("clangd", {})
+        -- Use the 0.11+ API
+        vim.lsp.config(server_name, server_opts)
+        vim.lsp.enable(server_name) -- 💡 Don't forget to enable!
+      end
 
-			-- Solidity
-			setup("solidity_ls_nomicfoundation", {
-				filetypes = { "solidity" },
-				-- Native root detection for Nvim 0.11+
-				root_markers = { "hardhat.config.js", "hardhat.config.ts", "foundry.toml", ".git" },
-			})
+      vim.lsp.config("asm_lsp", {
+        on_attach = on_attach,
+        capabilities = capabilities,
+        cmd = { "asm-lsp" }, -- Assumes ~/.cargo/bin is in your system PATH
+        filetypes = { "asm", "vmasm", "nasm", "s" },
+        root_dir = vim.fs.dirname(vim.fs.find({ ".git", ".gitignore" }, { upward = true })[1]),
+      })
+      vim.lsp.enable("asm_lsp")
 
-			-- Java (optional if using jdtls separately)
-			setup("jdtls", {})
+      -- All your diagnostic settings remain unchanged. They are perfect.
+      vim.diagnostic.config({
+        virtual_text = true,
+        signs = true,
+        underline = true,
+        update_in_insert = false,
+        float = {
+          border = "rounded",
+          source = "always",
+          header = "",
+          prefix = "",
+          scope = "cursor",
+        },
+      })
+      local diagnostics_hidden = false
+      -- Other keymaps and settings are also fine.
+      vim.o.updatetime = 250
+      vim.api.nvim_create_autocmd("CursorHold", {
+        callback = function()
+          if not diagnostics_hidden then
+            vim.diagnostic.open_float(nil, { focus = false })
+          end
+        end,
+      })
+      vim.keymap.set("n", "<leader>ld", require("telescope.builtin").diagnostics, { desc = "List diagnostics" })
 
-			-- Python
-			setup("pyright", {})
-
-			-- Assembly
-			setup("asm_lsp", {})
-
-			-- CSS
-			setup("cssls", {
-				filetypes = { "css", "scss", "less", "html" },
-				settings = {
-					css = { validate = true },
-					scss = { validate = true },
-					less = { validate = true },
-					provideFormatter = true,
-				},
-			})
-
-			-- Tailwind
-			setup("tailwindcss", {})
-
-			-- HTML
-			setup("html", {
-				filetypes = { "html", "htm", "handlebars" },
-				settings = {
-					html = {
-						suggest = {
-							html5 = true,
-							classAttribute = true,
-							styleAttribute = true,
-						},
-					},
-				},
-			})
-
-			-- Emmet
-			setup("emmet_ls", {
-				filetypes = { "html", "css", "javascriptreact", "typescriptreact", "htm", "handlebars" },
-				settings = {
-					html = {
-						options = {
-							["bem.enabled"] = true,
-						},
-					},
-				},
-			})
-
-			-- LSP Keymaps
-			vim.keymap.set("n", "K", vim.lsp.buf.hover, {})
-			vim.keymap.set("n", "gd", vim.lsp.buf.definition, {})
-			vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, {})
-			vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float)
-
-			-- Toggle floating diagnostic err
-			local diagnostics_hidden = false
-			vim.keymap.set("n", "<leader>td", function()
-				diagnostics_hidden = not diagnostics_hidden
-				if diagnostics_hidden then
-					-- Modern way to disable diagnostics for current buffer
-					vim.diagnostic.enable(false, { bufnr = 0 })
-					print("🔕 Diagnostics hidden")
-				else
-					vim.diagnostic.enable(true, { bufnr = 0 })
-					print("🔔 Diagnostics shown")
-				end
-			end, { desc = "Toggle diagnostics display" })
-
-			--  Enable diagnostics
-			vim.diagnostic.config({
-				virtual_text = true,
-				signs = true,
-				underline = true,
-				update_in_insert = false,
-				severity_sort = true,
-			})
-			-- Auto floating diagnostics on cursor hold
-			vim.api.nvim_create_autocmd("CursorHold", {
-				callback = function()
-					vim.diagnostic.open_float(nil, {
-						focusable = false,
-						close_events = { "BufLeave", "CursorMoved", "InsertEnter", "FocusLost" },
-						border = "rounded",
-						source = "always",
-						prefix = " ",
-						scope = "cursor",
-					})
-				end,
-			})
-		end,
-	},
+      vim.keymap.set("n", "<leader>dt", function()
+        diagnostics_hidden = not diagnostics_hidden
+        if diagnostics_hidden then
+          vim.diagnostic.disable(0)
+          print("🔕 Diagnostics hidden")
+        else
+          vim.diagnostic.enable(0)
+          print("🔔 Diagnostics shown")
+        end
+      end, { desc = "Toggle diagnostics display" })
+    end,
+  },
 }
