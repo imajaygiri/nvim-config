@@ -27,6 +27,7 @@ return {
   -- ===================================================================
   {
     "neovim/nvim-lspconfig",
+    dependencies = { "saghen/blink.cmp" },
     config = function()
       -- Define our reusable on_attach function and capabilities
       local on_attach = function(client, bufnr)
@@ -38,12 +39,18 @@ return {
           vim.lsp.buf.code_action,
           { buffer = bufnr, desc = "LSP: Code Action" }
         )
-        if client.supports_method("textDocument/inlayHint") then
+
+        local excluded_language = { "ts_ls", "eslint_lsp" }
+        if
+          client.supports_method("textDocument/inlayHint")
+          and not vim.tbl_contains(excluded_language, client.name)
+        then
           vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
         end
       end
 
-      local capabilities = require("cmp_nvim_lsp").default_capabilities()
+      -- local capabilities = require("cmp_nvim_lsp").default_capabilities()
+      local capabilities = require("blink.cmp").get_lsp_capabilities()
 
       local servers = require("mason-lspconfig").get_installed_servers()
 
