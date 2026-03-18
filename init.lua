@@ -54,6 +54,16 @@ vim.api.nvim_create_autocmd("VimEnter", {
   end,
 })
 
+vim.api.nvim_create_autocmd("ColorScheme", {
+  callback = function()
+    vim.api.nvim_set_hl(0, "LspInlayHint", {
+      fg = "#7c7c7c",
+      bg = "NONE",
+      italic = true,
+    })
+  end,
+})
+
 require("lazy").setup("plugins")
 require("vim-options")
 require("keybindings")

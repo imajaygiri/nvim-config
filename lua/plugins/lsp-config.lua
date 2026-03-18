@@ -15,7 +15,7 @@ return {
     "williamboman/mason-lspconfig.nvim",
     config = function()
       -- This plugin's job is just to ensure LSP servers are installed.
-      local ensure_installed = { "lua_ls", "clangd", "jdtls", "pyright", "html", "cssls", "rust_analyzer", "verible" }
+      local ensure_installed = { "lua_ls", "jdtls", "pyright", "html", "cssls", "rust_analyzer", "verible" }
       require("mason-lspconfig").setup({
         ensure_installed = ensure_installed,
       })
@@ -42,7 +42,7 @@ return {
 
         local excluded_language = { "ts_ls", "eslint_lsp" }
         if
-          client.supports_method("textDocument/inlayHint")
+          client:supports_method("textDocument/inlayHint")
           and not vim.tbl_contains(excluded_language, client.name)
         then
           vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
@@ -64,21 +64,23 @@ return {
             },
           },
         },
-        ["clangd"] = {
-          cmd = {
-            "clangd",
-            "--background-index", -- 🛠 Index the project in the background
-            "--clang-tidy", -- 🛠 Enable C linting
-            "--completion-style=detailed",
-            "--header-insertion=never", -- 🛠 Prevents annoying auto-includes in C
-          },
-        },
+        -- ["clangd"] = {
+        --   cmd = {
+        --     "clangd",
+        --     "--background-index",
+        --     "--clang-tidy",
+        --     "--completion-style=detailed",
+        --     "--all-scopes-completion",
+        --     "--cross-file-rename",
+        --     "--header-insertion=never",
+        --     "--function-arg-placeholders",
+        --   },
+        --   filetypes = { "c", "cpp" },
+        -- },
         ["pyright"] = {
           settings = {
             python = {
-              analysis = {
-                extraPaths = { "/home/Vatsal/Codes/Python/OpenCV/stubs" },
-              },
+              analysis = {},
             },
           },
         },
@@ -100,16 +102,29 @@ return {
         vim.lsp.enable(server_name) -- 💡 Don't forget to enable!
       end
 
-      vim.lsp.config("asm_lsp", {
-        on_attach = on_attach,
-        capabilities = capabilities,
-        cmd = { "asm-lsp" }, -- Assumes ~/.cargo/bin is in your system PATH
-        filetypes = { "asm", "vmasm", "nasm", "s" },
-        root_dir = vim.fs.dirname(vim.fs.find({ ".git", ".gitignore" }, { upward = true })[1]),
-      })
-      vim.lsp.enable("asm_lsp")
+      -- vim.lsp.config("asm_lsp", {
+      --   on_attach = on_attach,
+      --   capabilities = capabilities,
+      --   cmd = { "asm-lsp" }, -- Assumes ~/.cargo/bin is in your system PATH
+      --   filetypes = { "asm", "vmasm", "nasm", "s" },
+      --   root_dir = vim.fs.dirname(vim.fs.find({ ".git", ".gitignore" }, { upward = true })[1]),
+      -- })
+      -- vim.lsp.enable("asm_lsp")
+      --
 
       -- All your diagnostic settings remain unchanged. They are perfect.
+      vim.lsp.config("clangd", {
+        cmd = {
+          "clangd",
+          "--background-index",
+          "--clang-tidy",
+          "--completion-style=detailed",
+          "--header-insertion=never",
+        },
+        on_attach = on_attach,
+        capabilities = capabilities,
+      })
+      vim.lsp.enable("clangd")
       vim.diagnostic.config({
         virtual_text = true,
         signs = true,

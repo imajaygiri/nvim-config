@@ -2,7 +2,8 @@ return {
   "nvim-lualine/lualine.nvim",
   dependencies = { "nvim-tree/nvim-web-devicons" },
   config = function()
-    require("lualine").setup({
+    local lualine = require("lualine")
+    lualine.setup({
       options = {
         -- theme = 'iceberg_dark',
         theme = "onedark",
@@ -10,7 +11,9 @@ return {
         component_separators = "",
       },
       sections = {
-        lualine_a = { "mode" },
+        lualine_a = {
+          "mode",
+        },
         lualine_b = {
           -- { "branch" },
           {
