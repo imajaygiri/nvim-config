@@ -40,7 +40,7 @@ return {
           { buffer = bufnr, desc = "LSP: Code Action" }
         )
 
-        local excluded_language = { "ts_ls", "eslint_lsp" }
+        local excluded_language = { "ts_ls", "eslint_lsp", "clangd" }
         if
           client:supports_method("textDocument/inlayHint")
           and not vim.tbl_contains(excluded_language, client.name)
@@ -116,6 +116,7 @@ return {
       vim.lsp.config("clangd", {
         cmd = {
           "clangd",
+          "--inlay-hints=false",
           "--background-index",
           "--clang-tidy",
           "--completion-style=detailed",
