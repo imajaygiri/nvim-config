@@ -3,6 +3,7 @@ return{
   config = function()
     require('neoscroll').setup({
       easing_function = "sine", -- feel free to try "circular" or "quartic"
+      -- easing_function = "quartic", -- feel free to try "circular" or "quartic"
       hide_cursor = false,
       stop_eof = true,
     })
