@@ -32,7 +32,7 @@ return {
     -- 💡 Engineering Extra: Customizing formatter arguments
     formatters = {
       stylua = {
-        prepend_args = { "--indent-type", "Spaces", "--indent-width", "2" },
+        prepend_args = { "--indent-type", "Spaces", "--indent-width", "4" },
       },
       shfmt = {
         prepend_args = { "-i", "2", "-ci" },

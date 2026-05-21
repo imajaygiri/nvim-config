@@ -30,6 +30,8 @@ vim.g.loaded_perl_provider = 0
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
+vim.o.winborder = "rounded"
+
 vim.opt.mouse = ""
 
 vim.api.nvim_create_autocmd("FileType", {

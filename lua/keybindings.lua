@@ -22,6 +22,6 @@ vim.keymap.set("n", "<C-k>", "<C-u>", { noremap = true, silent = true })
 vim.keymap.set("v", "<C-j>", "<C-d>", { noremap = true, silent = true })
 vim.keymap.set("v", "<C-k>", "<C-u>", { noremap = true, silent = true })
 
--- vim.keymap.set({ "i", "s" }, "<C-e>", function()
---   require("luasnip").unlink_current()
--- end
+vim.keymap.set({ "i", "s" }, "<C-h>", function()
+  require("luasnip").unlink_current()
+end)

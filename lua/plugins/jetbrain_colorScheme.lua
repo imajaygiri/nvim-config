@@ -5,6 +5,6 @@ return {
   opts = {},
   config = function()
     -- require("jb").setup({ transparent = true })
-    vim.cmd("colorscheme jb")
+    -- vim.cmd("colorscheme jb")
   end,
 }
